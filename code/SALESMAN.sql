@@ -1,0 +1,10 @@
+DO $$
+DECLARE 
+    RESULT_COST NUMERIC;
+BEGIN
+    CALL CALCULATE_FINAL_COST(1, RESULT_COST);
+    RAISE INFO 'Конечная стоимость: %', RESULT_COST;
+END;
+$$;
+--
+CALL UpdateJewelryAmount(1, 14);

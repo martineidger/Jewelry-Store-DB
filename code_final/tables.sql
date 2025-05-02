@@ -1,0 +1,174 @@
+--------- TABLES
+CREATE TABLE JEWELRIES (
+  ID_JEWELRY SERIAL PRIMARY KEY,
+  NAME VARCHAR(255) NOT NULL,
+  VENDOR_CODE VARCHAR(30) NOT NULL,
+  WEIGHT FLOAT NOT NULL,
+  METALL VARCHAR(80) NOT NULL,
+  DESCRIPTION TEXT,
+  COST NUMERIC(10,2) NOT NULL,
+  STORE_AMOUNT INTEGER NOT NULL,
+  ID_CATEGORY INTEGER,
+  DISCOUNTS INTEGER,
+  FOREIGN KEY (DISCOUNTS) REFERENCES DISCOUNTS (ID_DISCOUNT) ON DELETE SET NULL,
+  FOREIGN KEY (ID_CATEGORY) REFERENCES CATEGORIES (ID_CATEGORY) ON DELETE CASCADE
+);
+drop table JEWELRIES;
+
+DROP TABLE DELIVERIES;
+CREATE TABLE DELIVERIES(
+  ID_DEV SERIAL PRIMARY KEY,
+  DELIVERY_DATE DATE NOT NULL,
+  DELIVERY_TIME INTEGER NOT NULL,
+  AMOUNT INTEGER,
+  ID_JEWELRY SERIAL,
+  FOREIGN KEY (ID_JEWELRY) REFERENCES JEWELRIES (ID_JEWELRY) ON DELETE SET NULL
+);
+ALTER TABLE DELIVERIES
+ALTER COLUMN DELIVERY_TIME TYPE TIME USING 
+  TO_TIMESTAMP(DELIVERY_TIME::TEXT, 'HH24MI');
+
+DROP TABLE CUSTOMERS;
+CREATE TABLE CUSTOMERS(
+  ID_CUS SERIAL PRIMARY KEY,
+  FIRST_NAME VARCHAR(255) NOT NULL,
+  SECOND_NAME VARCHAR(255),
+  ADDRESS VARCHAR(255),
+  PHONE_CUS VARCHAR(20)
+);
+drop table sales;
+CREATE TABLE SALES (
+    ID_SALES SERIAL PRIMARY KEY,
+    ID_JEWELRY INTEGER NOT NULL,
+    ID_CUS INTEGER NOT NULL,
+    AMOUNT INTEGER,
+    DATE_SALES DATE,
+    FINAL_COST NUMERIC(10,2),
+    FOREIGN KEY (ID_JEWELRY) REFERENCES JEWELRIES(ID_JEWELRY) ON DELETE SET NULL,
+    FOREIGN KEY (ID_CUS) REFERENCES CUSTOMERS(ID_CUS) ON DELETE SET NULL
+);
+drop table reviews;
+CREATE TABLE REVIEWS(
+  ID_REVIEW SERIAL PRIMARY KEY,
+  ID_JEWELRY  INTEGER NOT NULL,
+  ID_CUS  INTEGER  NOT NULL,
+  RATING  INTEGER,
+  COMMENT TEXT,
+  FOREIGN KEY (ID_JEWELRY) REFERENCES JEWELRIES(ID_JEWELRY) ON DELETE CASCADE,
+  FOREIGN KEY (ID_CUS) REFERENCES CUSTOMERS(ID_CUS) ON DELETE SET NULL
+);
+drop table CATEGORIES;
+CREATE TABLE CATEGORIES(
+   ID_CATEGORY SERIAL PRIMARY KEY,
+   NAME VARCHAR(255) UNIQUE
+);
+drop table DISCOUNTS;
+CREATE TABLE DISCOUNTS(
+  ID_DISCOUNT SERIAL PRIMARY KEY,
+  DISCOUNT INTEGER UNIQUE
+);
+------
+drop table STOCK_REQUESTS;
+CREATE TABLE STOCK_REQUESTS (
+    ID_REQUEST SERIAL PRIMARY KEY,
+    ID_JEWELRY INTEGER NOT NULL,
+    REQUEST_DATE DATE NOT NULL,
+    REQUESTED_AMOUNT INTEGER NOT NULL,
+    STATUS VARCHAR(50) DEFAULT 'Pending',
+    FOREIGN KEY (ID_JEWELRY) REFERENCES JEWELRIES(ID_JEWELRY)
+);
+
+
+
+----------------
+INSERT INTO CATEGORIES (NAME) VALUES
+('Necklaces'),
+('Bracelets'),
+('Earrings'),
+('Rings'),
+('Watches');
+
+-- Вставка данных в таблицу DISCOUNTS
+INSERT INTO DISCOUNTS (DISCOUNT) VALUES
+(10),
+(15),
+(20),
+(5);
+
+-- Вставка данных в таблицу JEWELRIES
+INSERT INTO JEWELRIES (NAME, VENDOR_CODE, WEIGHT, METALL, DESCRIPTION, COST, STORE_AMOUNT, ID_CATEGORY, DISCOUNTS) VALUES
+('Gold Necklace', 'VN001', 50.0, 'Gold', 'Elegant gold necklace', 1200.00, 15,  1, 1),
+('Silver Bracelet', 'VN002', 30.0, 'Silver', 'Stylish silver bracelet', 800.00, 20,  2, 2),
+('Diamond Earrings', 'VN003', 5.0, 'Gold', 'Dazzling diamond earrings', 2500.00, 10,  3, 3),
+('Platinum Ring', 'VN004', 10.0, 'Platinum', 'Classic platinum ring', 3000.00, 5,  4, NULL),
+('Emerald Pendant', 'VN005', 15.0, 'Gold', 'Beautiful emerald pendant', 1500.00, 8,  1, 2),
+('Ruby Bracelet', 'VN006', 25.0, 'Silver', 'Charming ruby bracelet', 1200.00, 12,  2, 1),
+('Sapphire Ring', 'VN007', 12.0, 'Gold', 'Exquisite sapphire ring', 1800.00, 6,  4, NULL),
+('Titanium Watch', 'VN008', 70.0, 'Titanium', 'Durable titanium watch', 1500.00, 10,  5, 3),
+('Gemstone Earrings', 'VN009', 6.0, 'Silver', 'Colorful gemstone earrings', 900.00, 15,   3, 2),
+('Gold Cufflinks', 'VN010', 8.0, 'Gold', 'Elegant gold cufflinks', 1100.00, 20,   5, NULL);
+
+-- Вставка данных в таблицу CUSTOMERS
+INSERT INTO CUSTOMERS (FIRST_NAME, SECOND_NAME, ADDRESS, PHONE_CUS) VALUES
+('John', 'Doe', '123 Elm St', '321-654-9870'),
+('Jane', 'Smith', '456 Oak Ave', '654-321-0987'),
+('Mike', 'Johnson', '789 Pine Rd', '987-654-3210');
+    
+-- Вставка данных в таблицу SALES
+INSERT INTO SALES (ID_JEWELRY, ID_CUS,  AMOUNT, DATE_SALES, FINAL_COST) VALUES
+(1, 1, 1, '2023-12-01', 1200.00),
+(2, 2, 1, '2023-12-02', 800.00),
+(3, 1, 2, '2023-12-03', 2500.00),
+(4, 3, 1, '2023-12-04', 3000.00),
+(5, 2, 1, '2023-12-05', 1500.00);
+
+-- Вставка данных в таблицу REVIEWS
+INSERT INTO REVIEWS (ID_JEWELRY, ID_CUS, RATING, COMMENT) VALUES
+(1, 1, 5, 'Absolutely love this necklace!'),
+(2, 2, 4, 'Great bracelet, but a bit tight.'),
+(3, 1, 5, 'The earrings are stunning!'),
+(4, 3, 3, 'Ring is nice, but a bit expensive.'),
+(5, 2, 5, 'Pendant is beautiful and well made.');
+
+
+--- adding constrains
+SELECT
+    conname AS constraint_name,
+    confdeltype AS delete_rule
+FROM
+    pg_constraint
+WHERE
+    conrelid = 'sales'::regclass AND 
+    conname = 'sales_id_cus_fkey';
+
+SELECT
+    conname,
+    confdeltype
+FROM
+    pg_constraint
+WHERE
+    conname = 'sales_id_cus_fkey';
+select  * from sales;
+
+ALTER TABLE SALES
+ALTER COLUMN ID_JEWELRY DROP NOT NULL;
+
+ALTER TABLE SALES
+ALTER COLUMN ID_CUS DROP NOT NULL;
+
+ALTER TABLE reviews
+ALTER COLUMN ID_CUS DROP NOT NULL;
+
+ALTER TABLE SALES
+DROP CONSTRAINT sales_id_cus_fkey;
+
+ALTER TABLE SALES
+ADD CONSTRAINT sales_id_cus_fkey
+FOREIGN KEY (ID_CUS) REFERENCES CUSTOMERS(ID_CUS) ON DELETE SET NULL;
+
+ALTER TABLE REVIEWS
+DROP CONSTRAINT reviews_id_cus_fkey;
+
+ALTER TABLE REVIEWS
+ADD CONSTRAINT reviews_id_cus_fkey
+FOREIGN KEY (id_cus) REFERENCES CUSTOMERS(id_cus) ON DELETE SET NULL;

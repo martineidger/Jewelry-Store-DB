@@ -1,0 +1,46 @@
+CREATE OR REPLACE PROCEDURE updatedeliverydatetimebyjewelry(
+    jew_id INT, 
+    new_amount INT,
+    new_delivery_date DATE DEFAULT NULL, 
+    new_delivery_time TIME DEFAULT NULL
+)
+SECURITY DEFINER
+AS $$
+DECLARE
+    existing_delivery_count INT;
+BEGIN
+    -- Проверка наличия jewelry_id
+    IF jew_id IS NULL THEN
+        RAISE EXCEPTION 'Jewelry ID не может быть NULL';
+    END IF;
+
+    -- Подсчет существующих записей для данного jewelry_id
+    SELECT COUNT(*) INTO existing_delivery_count
+    FROM deliveries
+    WHERE id_jewelry = jew_id;
+
+    IF existing_delivery_count > 0 THEN
+        -- Обновление существующих записей
+        UPDATE deliveries
+        SET 
+            delivery_date = COALESCE(new_delivery_date, delivery_date),
+            delivery_time = COALESCE(new_delivery_time, delivery_time),
+            amount = COALESCE(new_amount, amount) -- Обновление количества, если новое значение передано
+        WHERE id_jewelry = jew_id;
+
+        RAISE NOTICE 'Данные успешно обновлены для jewelry_id = %', jew_id;
+
+    ELSE
+        -- Проверка на ввод количества
+        IF new_amount IS NULL OR new_amount < 0 THEN
+            RAISE EXCEPTION 'Количество не может быть NULL или отрицательным';
+        END IF;
+
+        -- Вставка новой записи
+        INSERT INTO deliveries (delivery_date, delivery_time, id_jewelry, amount)
+        VALUES (new_delivery_date, new_delivery_time, jew_id, new_amount);
+
+        RAISE NOTICE 'Создана новая запись для jewelry_id = %', jew_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
